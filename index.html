@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình Chỉnh Sửa Game Lớp 4</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background-color: #1e1e1e; color: #fff; }
+        h3 { margin: 5px 0; text-align: center; color: #4caf50; }
+        textarea { width: 100%; height: 35vh; background-color: #2d2d2d; color: #a9dc76; border: 2px solid #444; border-radius: 5px; padding: 10px; font-family: monospace; font-size: 14px; resize: none; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+        button { padding: 12px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        .btn-preview { background-color: #2196F3; }
+        .btn-full { background-color: #9c27b0; }
+        .btn-publish { background-color: #4CAF50; }
+        #linkContainer { background: #333; padding: 10px; border-radius: 5px; margin-bottom: 10px; word-break: break-all; display: none; text-align: center; border: 1px dashed #4CAF50; }
+        #linkContainer a { color: #4CAF50; font-weight: bold; text-decoration: none; }
+        .preview-box { width: 100%; height: 42vh; background: #fff; border: 2px solid #555; border-radius: 5px; }
+        /* Giao diện xem toàn màn hình ẩn mặc định */
+        #fullScreenWrapper { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; }
+        #fullScreenWrapper iframe { width: 100%; height: 100%; border: none; }
+        #closeFullBtn { position: absolute; top: 15px; right: 15px; background: rgba(255,0,0,0.8); padding: 8px 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h3>💻 TRÌNH SOẠN THẢO CODE GAME</h3>
+    
+    <!-- Ô nhập code (Đã dán sẵn code game Flappy Bird cho em luôn) -->
+    <textarea id="codeEditor" placeholder="Dán code HTML của em vào đây..."><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { text-align: center; background: #222; margin: 0; overflow: hidden; touch-action: none; }
+        canvas { background: #70c5ce; display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth > 400 ? 400 : window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let birdY = canvas.height / 3, birdSize = 24, gravity = 0.4, velocity = 0, jump = -6.5, birdAngle = 0;
+        let pipes = [], pipeWidth = 60, pipeGap = 140, pipeSpeed = 2.5, particles = [], score = 0, gameOver = false;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
+        function playSound(f1, f2, type, d) {
+            initAudio(); if (!audioCtx) return;
+            let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = type;
+            osc.frequency.setValueAtTime(f1, audioCtx.currentTime);
+            if (f2) osc.frequency.exponentialRampToValueAtTime(f2, audioCtx.currentTime + d);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + d);
+            osc.start(); osc.stop(audioCtx.currentTime + d);
+        }
+
+        function createPipe() {
+            let h = Math.floor(Math.random() * (canvas.height - pipeGap - 140)) + 60;
+            pipes.push({ x: canvas.width, top: h, bottom: canvas.height - h - pipeGap, passed: false });
+        }
+        function createExplosion(x, y) {
+            for (let i = 0; i < 15; i++) {
+                particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6 - 2, size: Math.random() * 4 + 2, alpha: 1 });
+            }
+        }
+        function handleTouch(e) { e.preventDefault(); initAudio(); if (gameOver) resetGame(); else { velocity = jump; playSound(400, 800, "sine", 0.1); } }
+        window.addEventListener("touchstart", handleTouch, { passive: false });
+        window.addEventListener("mousedown", handleTouch);
+
+        function resetGame() { birdY = canvas.height / 3; velocity = 0; birdAngle = 0; pipes = []; particles = []; score = 0; gameOver = false; createPipe(); loop(); }
+        function update() {
+            if (gameOver) {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].vy += 0.2; particles[i].alpha -= 0.02;
+                    if (particles[i].alpha <= 0) particles.splice(i, 1);
+                }
+                return;
+            }
+            velocity += gravity; birdY += velocity;
+            birdAngle = velocity < 0 ? -0.3 : (velocity > 4 ? Math.min(birdAngle + 0.05, 1.2) : 0);
+            if (birdY + birdSize > canvas.height || birdY < 0) endGame();
+
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                pipes[i].x -= pipeSpeed;
+                if (!pipes[i].passed && pipes[i].x + pipeWidth < 50) { score++; pipes[i].passed = true; }
+                if (50 + birdSize > pipes[i].x && window.birdX || 50 < pipes[i].x + pipeWidth && (birdY < pipes[i].top || birdY + birdSize > canvas.height - pipes[i].bottom)) { endGame(); }
+                if (pipes[i].x + pipeWidth < 0) pipes.splice(i, 1);
+            }
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 180) createPipe();
+        }
+        function endGame() { if (!gameOver) { gameOver = true; playSound(300, 80, "sawtooth", 0.4); createExplosion(50 + birdSize/2, birdY + birdSize/2); } }
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#FFDE4D";
+            for (let p of particles) { ctx.save(); ctx.globalAlpha = p.alpha; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+            if (!gameOver || particles.length > 0) {
+                ctx.save(); ctx.translate(50 + birdSize/2, birdY + birdSize/2); ctx.rotate(birdAngle);
+                ctx.beginPath(); ctx.arc(0, 0, birdSize/2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#FFF"; ctx.beginPath(); ctx.arc(4, -4, 4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#FF4E26"; ctx.beginPath(); ctx.moveTo(birdSize/2, 0); ctx.lineTo(birdSize/2+8, -3); ctx.lineTo(birdSize/2+8, 3); ctx.fill();
+                ctx.restore();
+            }
+            ctx.fillStyle = "#73B839";
+            for (let p of pipes) { ctx.fillRect(p.x, 0, pipeWidth, p.top); ctx.fillRect(p.x, canvas.height - p.bottom, pipeWidth, p.bottom); }
+            ctx.fillStyle = "#FFF"; ctx.font = "bold 22px Arial"; ctx.fillText("Điểm: " + score, 15, 35);
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle = "#FF3333"; ctx.font = "bold 30px Arial"; ctx.textAlign = "center"; ctx.fillText("BẠN NGỎM RỒI!", canvas.width/2, canvas.height/2-30);
+                ctx.fillStyle = "#FFF"; ctx.font = "18px Arial"; ctx.fillText("Chạm để chơi lại", canvas.width/2, canvas.height/2+20); ctx.textAlign = "left";
+            }
+        }
+        function loop() { update(); draw(); if (!gameOver || particles.length > 0) requestAnimationFrame(loop); }
+        resetGame();
+    </script>
+</body>
+</html></textarea>
+
+    <!-- Hàng nút bấm chức năng -->
+    <div class="btn-group">
+        <button class="btn-preview" onclick="runPreview()">Xem thử</button>
+        <button class="btn-full" onclick="runFullScreen()">Xem Full</button>
+        <button class="btn-publish" onclick="publishGame()">Xuất bản</button>
+    </div>
+
+    <!-- Khung hiển thị Link ID khi xuất bản -->
+    <div id="linkContainer">
+        🎉 Đã tạo Link ID thành công!<br>
+        <a id="generatedLink" href="#" target="_blank">Đang tải...</a>
+    </div>
+    <!-- Khung hiển thị Xem thử thu nhỏ -->
+    <iframe id="previewIframe" class="preview-box"></iframe>
+
+    <!-- Khung hiển thị Xem toàn màn hình (Chỉ hiện khi bấm nút Xem Full) -->
+    <div id="fullScreenWrapper">
+        <button id="closeFullBtn" onclick="closeFullScreen()">Thoát Full</button>
+        <iframe id="fullScreenIframe"></iframe>
+    </div>
+
+    <script>
+        const editor = document.getElementById("codeEditor");
+        const previewIframe = document.getElementById("previewIframe");
+        const fullIframe = document.getElementById("fullScreenIframe");
+        const fullWrapper = document.getElementById("fullScreenWrapper");
+        const linkContainer = document.getElementById("linkContainer");
+        const generatedLink = document.getElementById("generatedLink");
+
+        // 1. Chức năng xem thử thu nhỏ
+        function runPreview() {
+            const code = editor.value;
+            previewIframe.srcdoc = code;
+        }
+
+        // 2. Chức năng xem thử toàn màn hình trên điện thoại
+        function runFullScreen() {
+            const code = editor.value;
+            fullWrapper.style.display = "block";
+            fullIframe.srcdoc = code;
+        }
+
+        function closeFullScreen() {
+            fullWrapper.style.display = "none";
+            fullIframe.srcdoc = ""; // Xóa nội dung để tắt hẳn âm thanh game khi đóng
+        }
+
+        // 3. Chức năng xuất bản tạo link ID kiểu ?id=bao-nhieu
+        function publishGame() {
+            // Tạo một ID số ngẫu nhiên từ 1000 đến 9999 cho đúng ý em
+            const randomId = Math.floor(Math.random() * 9000) + 1000;
+            
+            // Lấy địa chỉ hiện tại của file html này
+            let currentUrl = window.location.href.split('?')[0];
+            
+            // Gắn thêm đuôi id vào link
+            let finalUrl = currentUrl + "?id=" + randomId;
+            
+            // Lưu code game vào bộ nhớ điện thoại (localStorage) theo ID để khi bấm vào link sẽ load được
+            localStorage.setItem("game_id_" + randomId, editor.value);
+
+            // Hiển thị link ra màn hình
+            generatedLink.href = finalUrl;
+            generatedLink.innerText = finalUrl;
+            linkContainer.style.display = "block";
+        }
+
+        // TỰ ĐỘNG KIỂM TRA LINK ID KHI MỞ TRANG
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            
+            // Nếu phát hiện trên link có ?id=... thì tự động chạy code của ID đó luôn
+            if (id) {
+                const savedCode = localStorage.getItem("game_id_" + id);
+                if (savedCode) {
+                    document.body.innerHTML = '<iframe srcdoc="" id="directIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
+                    document.getElementById("directIframe").srcdoc = savedCode;
+                } else {
+                    document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Không tìm thấy game với ID: " + id + "</h2>";
+                }
+            } else {
+                // Nếu chạy trang bình thường không có ID, tự động load xem thử lần đầu
+                runPreview();
+            }
+        }
+    </script>
+</body>
+</html>
