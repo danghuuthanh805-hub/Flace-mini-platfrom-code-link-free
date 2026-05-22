@@ -20,9 +20,8 @@
         .preview-box { width: 100%; height: 42vh; background: #fff; border: 2px solid #555; border-radius: 5px; }
         #fullScreenWrapper { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; }
         #fullScreenWrapper iframe { width: 100%; height: 100%; border: none; }
-        #closeFullBtn { position: absolute; top: 15px; right: 15px; background: rgba(255,0,0,0.8); padding: 8px 15px; border-radius: 5px; color: white; border: none; }
+        #closeFullBtn { position: absolute; top: 15px; right: 15px; background: rgba(255,0,0,0.8); padding: 8px 15px; border-radius: 5px; color: white; border: none; z-index: 10000; }
         
-        /* GIAO DIỆN KHI NGƯỜI KHÁC XEM BẰNG MÁY TÍNH */
         @media (min-width: 768px) {
             .pc-hide { display: none !important; }
             .preview-box { width: 400px; height: 600px; margin: 20px auto; display: block; }
@@ -33,8 +32,106 @@
 
     <h3 class="pc-hide">💻 TRÌNH SOẠN THẢO CODE GAME (LƯU ĐÁM MÂY)</h3>
     
-    <textarea id="codeEditor" class="pc-hide" placeholder="Dán code HTML của em vào đây...">Dán code game vào đây...</textarea>
+    <textarea id="codeEditor" class="pc-hide" placeholder="Dán code HTML của em vào đây..."><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { text-align: center; background: #222; margin: 0; overflow: hidden; touch-action: none; }
+        canvas { background: #70c5ce; display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth > 400 ? 400 : window.innerWidth;
+        canvas.height = window.innerHeight;
 
+        let birdX = 50, birdY = canvas.height / 3, birdSize = 24, gravity = 0.4, velocity = 0, jump = -6.5, birdAngle = 0;
+        let pipes = [], pipeWidth = 60, pipeGap = 140, pipeSpeed = 2.5, particles = [], score = 0, gameOver = false;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
+        function playSound(f1, f2, type, d) {
+            initAudio(); if (!audioCtx) return;
+            let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = type;
+            osc.frequency.setValueAtTime(f1, audioCtx.currentTime);
+            if (f2) osc.frequency.exponentialRampToValueAtTime(f2, audioCtx.currentTime + d);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + d);
+            osc.start(); osc.stop(audioCtx.currentTime + d);
+        }
+
+        function createPipe() {
+            let h = Math.floor(Math.random() * (canvas.height - pipeGap - 140)) + 60;
+            pipes.push({ x: canvas.width, top: h, bottom: canvas.height - h - pipeGap, passed: false });
+        }
+        function createExplosion(x, y) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({ 
+                    x: x, y: y, 
+                    vx: (Math.random() - 0.5) * 6, 
+                    vy: (Math.random() - 0.5) * 6 - 2, 
+                    size: Math.random() * 4 + 2, 
+                    color: Math.random() > 0.5 ? "#FFDE4D" : "#FF4E26",
+                    alpha: 1 
+                });
+            }
+        }
+        function handleTouch(e) { e.preventDefault(); initAudio(); if (gameOver) resetGame(); else { velocity = jump; playSound(400, 800, "sine", 0.1); } }
+        window.addEventListener("touchstart", handleTouch, { passive: false });
+        window.addEventListener("mousedown", handleTouch);
+
+        function resetGame() { birdY = canvas.height / 3; velocity = 0; birdAngle = 0; pipes = []; particles = []; score = 0; gameOver = false; createPipe(); loop(); }
+        function update() {
+            if (gameOver) {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].vy += 0.2; particles[i].alpha -= 0.02;
+                    if (particles[i].alpha <= 0) particles.splice(i, 1);
+                }
+                return;
+            }
+            velocity += gravity; birdY += velocity;
+            birdAngle = velocity < 0 ? -0.3 : (velocity > 4 ? Math.min(birdAngle + 0.05, 1.2) : 0);
+            if (birdY + birdSize > canvas.height || birdY < 0) endGame();
+
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                pipes[i].x -= pipeSpeed;
+                if (!pipes[i].passed && pipes[i].x + pipeWidth < birdX) { score++; pipes[i].passed = true; }
+                if (birdX + birdSize > pipes[i].x && birdX < pipes[i].x + pipeWidth && (birdY < pipes[i].top || birdY + birdSize > canvas.height - pipes[i].bottom)) { endGame(); }
+                if (pipes[i].x + pipeWidth < 0) pipes.splice(i, 1);
+            }
+            if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 180) createPipe();
+        }
+        function endGame() { if (!gameOver) { gameOver = true; playSound(300, 80, "sawtooth", 0.4); createExplosion(birdX + birdSize/2, birdY + birdSize/2); } }
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let p of particles) { ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+            if (!gameOver || particles.length > 0) {
+                ctx.save(); ctx.translate(birdX + birdSize/2, birdY + birdSize/2); ctx.rotate(birdAngle);
+                ctx.fillStyle = "#FFDE4D"; ctx.beginPath(); ctx.arc(0, 0, birdSize/2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#FFF"; ctx.beginPath(); ctx.arc(birdSize*0.2, -birdSize*0.2, 4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#FF4E26"; ctx.beginPath(); ctx.moveTo(birdSize/2, 0); ctx.lineTo(birdSize/2+8, -3); ctx.lineTo(birdSize/2+8, 3); ctx.fill();
+                ctx.restore();
+            }
+            ctx.fillStyle = "#73B839";
+            for (let p of pipes) { ctx.fillRect(p.x, 0, pipeWidth, p.top); ctx.fillRect(p.x, canvas.height - p.bottom, pipeWidth, p.bottom); }
+            ctx.fillStyle = "#FFF"; ctx.font = "bold 22px Arial"; ctx.fillText("Điểm: " + score, 15, 35);
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle = "#FF3333"; ctx.font = "bold 30px Arial"; ctx.textAlign = "center"; ctx.fillText("BẠN NGỎM RỒI!", canvas.width/2, canvas.height/2-30);
+                ctx.fillStyle = "#FFF"; ctx.font = "18px Arial"; ctx.fillText("Chạm để chơi lại", canvas.width/2, canvas.height/2+20); ctx.textAlign = "left";
+            }
+        }
+        function loop() { update(); draw(); if (!gameOver || particles.length > 0) requestAnimationFrame(loop); }
+        resetGame();
+    </script>
+</body>
+</html></textarea>
     <div class="btn-group pc-hide">
         <button class="btn-preview" onclick="runPreview()">Xem thử</button>
         <button class="btn-full" onclick="runFullScreen()">Xem Full</button>
@@ -46,7 +143,6 @@
         <a id="generatedLink" href="#" target="_blank">Đang tải...</a>
     </div>
 
-    <!-- Khung này sẽ biến thành màn hình chơi game chính giữa khi mở bằng máy tính -->
     <iframe id="previewIframe" class="preview-box"></iframe>
 
     <div id="fullScreenWrapper">
@@ -55,9 +151,9 @@
     </div>
 
     <script>
-        // Điền Key JSONBin và link GitHub của em vào đây
-        const api key = "$2a$10$T8XFyvC/Suad/v9oWisrleIexgHSR8oLlh6STz71YMb7GnKVz7eBO";
-        const githubUrl = "https://github.io";
+        // ⚠️ ĐIỀN THÔNG TIN CỦA EM VÀO 2 DÒNG DƯỚI ĐÂY:
+        const apiKey = "$$2a$10$T8XFyvC/Suad/v9oWisrleIexgHSR8oLlh6STz71YMb7GnKVz7eBO"; 
+        const githubUrl = "https://place.com";
 
         const editor = document.getElementById("codeEditor");
         const previewIframe = document.getElementById("previewIframe");
@@ -72,6 +168,10 @@
         function closeFullScreen() { fullWrapper.style.display = "none"; fullIframe.srcdoc = ""; }
 
         function publishGame() {
+            if(apiKey.includes("DÁN_MÃ_X_MASTER_KEY")) {
+                alert("Em chưa điền mã X-Master-Key của JSONBin kìa!");
+                return;
+            }
             publishBtn.disabled = true;
             publishBtn.innerText = "Đang lưu...";
             fetch("https://jsonbin.io", {
@@ -106,7 +206,7 @@
                         document.getElementById("directIframe").srcdoc = data.record.html;
                     } else { document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Không tìm thấy mã game!</h2>"; }
                 })
-                .catch(err => { document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Lỗi kết nối đám mây!</h2>"; });
+                .catch(err => { document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Lỗi kết nối đám mây! Bạn có thể chưa thay đổi đúng API Key chính xác của mình.</h2>"; });
             } else { runPreview(); }
         }
     </script>
