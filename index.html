@@ -2,212 +2,301 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Chỉnh Sửa Game Lớp 4 Cloud</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Studio App Vô Hạn Không Lỗi</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background-color: #1e1e1e; color: #fff; }
-        h3 { margin: 5px 0; text-align: center; color: #4caf50; }
-        textarea { width: 100%; height: 35vh; background-color: #2d2d2d; color: #a9dc76; border: 2px solid #444; border-radius: 5px; padding: 10px; font-family: monospace; font-size: 14px; resize: none; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
-        button { padding: 12px; font-size: 14px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; color: white; }
-        button:disabled { background-color: #555 !important; color: #aaa; cursor: not-allowed; }
-        .btn-preview { background-color: #2196F3; }
-        .btn-full { background-color: #9c27b0; }
-        .btn-publish { background-color: #4CAF50; }
-        #linkContainer { background: #333; padding: 10px; border-radius: 5px; margin-bottom: 10px; word-break: break-all; display: none; text-align: center; border: 1px dashed #4CAF50; }
-        #linkContainer a { color: #4CAF50; font-weight: bold; text-decoration: none; }
-        .preview-box { width: 100%; height: 42vh; background: #fff; border: 2px solid #555; border-radius: 5px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #0c0c12; color: #e2e2e9; padding: 12px; }
+        h3 { text-align: center; color: #00ff66; margin: 5px 0 15px 0; text-shadow: 0 0 10px rgba(0,255,102,0.3); font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .tool-box { background: #151522; padding: 15px; border-radius: 14px; border: 1px solid #232338; margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .btn-upload { display: block; width: 100%; padding: 12px; background: linear-gradient(45deg, #2196F3, #00b0ff); color: white; border-radius: 8px; font-weight: bold; text-align: center; cursor: pointer; margin-bottom: 12px; font-size: 13px; }
+        .input-group { display: flex; gap: 8px; margin-bottom: 5px; }
+        input[type="text"] { flex: 1; padding: 11px; background: #08080e; border: 1px solid #31314a; border-radius: 8px; color: white; outline: none; font-size: 13px; }
+        input[type="text"]:focus { border-color: #00ff66; }
+        
+        .btn-add { padding: 0 18px; background: #00ff66; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        .file-list-title { font-size: 12px; color: #888; text-transform: uppercase; margin: 12px 0 6px 2px; font-weight: bold; }
+        .file-container { max-height: 150px; overflow-y: auto; background: #08080e; border-radius: 8px; border: 1px solid #232338; padding: 6px; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #181826; margin-bottom: 6px; border-radius: 6px; border-left: 4px solid #555; }
+        .file-item.active { border-left-color: #00ff66; background: #16261d; }
+        .file-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; cursor: pointer; color: #fff; }
+        .file-actions button { background: none; border: none; color: #999; margin-left: 12px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .file-actions .btn-del { color: #ff3366; }
+        .file-actions .btn-ren { color: #00b0ff; }
+
+        textarea { width: 100%; height: 26vh; background-color: #0a0a10; color: #a9dc76; border: 1px solid #232338; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 13px; resize: none; outline: none; margin-bottom: 12px; line-height: 1.5; }
+        
+        .control-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .control-group button { padding: 13px; font-size: 12px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: white; text-transform: uppercase; }
+        .btn-run { background: #4caf50; }
+        .btn-full { background: #9c27b0; }
+        .btn-pub { background: #ff007f; box-shadow: 0 4px 12px rgba(255,0,127,0.3); }
+
+        #linkContainer { background: #102216; padding: 12px; border-radius: 10px; margin-bottom: 12px; word-break: break-all; display: none; text-align: center; border: 1px dashed #00ff66; font-size: 13px; }
+        #linkContainer a { color: #00ff66; font-weight: bold; text-decoration: none; }
+
+        .preview-box { width: 100%; height: 34vh; background: #fff; border: 1px solid #232338; border-radius: 12px; display: block; }
         #fullScreenWrapper { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; }
         #fullScreenWrapper iframe { width: 100%; height: 100%; border: none; }
-        #closeFullBtn { position: absolute; top: 15px; right: 15px; background: rgba(255,0,0,0.8); padding: 8px 15px; border-radius: 5px; color: white; border: none; z-index: 10000; }
-        
-        @media (min-width: 768px) {
-            .pc-hide { display: none !important; }
-            .preview-box { width: 400px; height: 600px; margin: 20px auto; display: block; }
-        }
+        #closeFullBtn { position: absolute; top: 15px; right: 15px; background: rgba(255, 0, 85, 0.95); padding: 8px 18px; border-radius: 6px; color: white; border: none; font-weight: bold; z-index: 10000; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <h3 class="pc-hide">💻 TRÌNH SOẠN THẢO CODE GAME (LƯU ĐÁM MÂY)</h3>
+    <h3>📦 APP STUDIO UNCRASHABLE V3</h3>
     
-    <textarea id="codeEditor" class="pc-hide" placeholder="Dán code HTML của em vào đây..."><!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        body { text-align: center; background: #222; margin: 0; overflow: hidden; touch-action: none; }
-        canvas { background: #70c5ce; display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; }
-    </style>
-</head>
-<body>
-    <canvas id="gameCanvas"></canvas>
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth > 400 ? 400 : window.innerWidth;
-        canvas.height = window.innerHeight;
+    <div class="tool-box">
+        <label class="btn-upload">📂 TẢI LÊN TỆP (.HTML / .ZIP)
+            <input type="file" id="fileUploader" accept=".html,.zip" style="display: none;" onchange="handleFileUpload(event)">
+        </label>
+        
+        <div class="input-group">
+            <input type="text" id="newFileName" placeholder="Tên tệp tin thủ công mới...">
+            <button type="button" class="btn-add" onclick="createNewFileManual()">Tạo Mới</button>
+        </div>
 
-        let birdX = 50, birdY = canvas.height / 3, birdSize = 24, gravity = 0.4, velocity = 0, jump = -6.5, birdAngle = 0;
-        let pipes = [], pipeWidth = 60, pipeGap = 140, pipeSpeed = 2.5, particles = [], score = 0, gameOver = false;
-
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx = null;
-        function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
-        function playSound(f1, f2, type, d) {
-            initAudio(); if (!audioCtx) return;
-            let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = type;
-            osc.frequency.setValueAtTime(f1, audioCtx.currentTime);
-            if (f2) osc.frequency.exponentialRampToValueAtTime(f2, audioCtx.currentTime + d);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + d);
-            osc.start(); osc.stop(audioCtx.currentTime + d);
-        }
-
-        function createPipe() {
-            let h = Math.floor(Math.random() * (canvas.height - pipeGap - 140)) + 60;
-            pipes.push({ x: canvas.width, top: h, bottom: canvas.height - h - pipeGap, passed: false });
-        }
-        function createExplosion(x, y) {
-            for (let i = 0; i < 20; i++) {
-                particles.push({ 
-                    x: x, y: y, 
-                    vx: (Math.random() - 0.5) * 6, 
-                    vy: (Math.random() - 0.5) * 6 - 2, 
-                    size: Math.random() * 4 + 2, 
-                    color: Math.random() > 0.5 ? "#FFDE4D" : "#FF4E26",
-                    alpha: 1 
-                });
-            }
-        }
-        function handleTouch(e) { e.preventDefault(); initAudio(); if (gameOver) resetGame(); else { velocity = jump; playSound(400, 800, "sine", 0.1); } }
-        window.addEventListener("touchstart", handleTouch, { passive: false });
-        window.addEventListener("mousedown", handleTouch);
-
-        function resetGame() { birdY = canvas.height / 3; velocity = 0; birdAngle = 0; pipes = []; particles = []; score = 0; gameOver = false; createPipe(); loop(); }
-        function update() {
-            if (gameOver) {
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].vy += 0.2; particles[i].alpha -= 0.02;
-                    if (particles[i].alpha <= 0) particles.splice(i, 1);
-                }
-                return;
-            }
-            velocity += gravity; birdY += velocity;
-            birdAngle = velocity < 0 ? -0.3 : (velocity > 4 ? Math.min(birdAngle + 0.05, 1.2) : 0);
-            if (birdY + birdSize > canvas.height || birdY < 0) endGame();
-
-            for (let i = pipes.length - 1; i >= 0; i--) {
-                pipes[i].x -= pipeSpeed;
-                if (!pipes[i].passed && pipes[i].x + pipeWidth < birdX) { score++; pipes[i].passed = true; }
-                if (birdX + birdSize > pipes[i].x && birdX < pipes[i].x + pipeWidth && (birdY < pipes[i].top || birdY + birdSize > canvas.height - pipes[i].bottom)) { endGame(); }
-                if (pipes[i].x + pipeWidth < 0) pipes.splice(i, 1);
-            }
-            if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 180) createPipe();
-        }
-        function endGame() { if (!gameOver) { gameOver = true; playSound(300, 80, "sawtooth", 0.4); createExplosion(birdX + birdSize/2, birdY + birdSize/2); } }
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let p of particles) { ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
-            if (!gameOver || particles.length > 0) {
-                ctx.save(); ctx.translate(birdX + birdSize/2, birdY + birdSize/2); ctx.rotate(birdAngle);
-                ctx.fillStyle = "#FFDE4D"; ctx.beginPath(); ctx.arc(0, 0, birdSize/2, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#FFF"; ctx.beginPath(); ctx.arc(birdSize*0.2, -birdSize*0.2, 4, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#FF4E26"; ctx.beginPath(); ctx.moveTo(birdSize/2, 0); ctx.lineTo(birdSize/2+8, -3); ctx.lineTo(birdSize/2+8, 3); ctx.fill();
-                ctx.restore();
-            }
-            ctx.fillStyle = "#73B839";
-            for (let p of pipes) { ctx.fillRect(p.x, 0, pipeWidth, p.top); ctx.fillRect(p.x, canvas.height - p.bottom, pipeWidth, p.bottom); }
-            ctx.fillStyle = "#FFF"; ctx.font = "bold 22px Arial"; ctx.fillText("Điểm: " + score, 15, 35);
-            if (gameOver) {
-                ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-                ctx.fillStyle = "#FF3333"; ctx.font = "bold 30px Arial"; ctx.textAlign = "center"; ctx.fillText("BẠN NGỎM RỒI!", canvas.width/2, canvas.height/2-30);
-                ctx.fillStyle = "#FFF"; ctx.font = "18px Arial"; ctx.fillText("Chạm để chơi lại", canvas.width/2, canvas.height/2+20); ctx.textAlign = "left";
-            }
-        }
-        function loop() { update(); draw(); if (!gameOver || particles.length > 0) requestAnimationFrame(loop); }
-        resetGame();
-    </script>
-</body>
-</html></textarea>
-    <div class="btn-group pc-hide">
-        <button class="btn-preview" onclick="runPreview()">Xem thử</button>
-        <button class="btn-full" onclick="runFullScreen()">Xem Full</button>
-        <button class="btn-publish" id="publishBtn" onclick="publishGame()">Xuất bản</button>
+        <div class="file-list-title">Danh sách tệp tin hiện tại:</div>
+        <div class="file-container" id="fileListWrapper"></div>
     </div>
 
-    <div id="linkContainer" class="pc-hide">
-        🎉 Đã lưu lên Cloud thành công! Link vĩnh viễn của em:<br>
-        <a id="generatedLink" href="#" target="_blank">Đang tải...</a>
+    <textarea id="codeEditor" placeholder="Nhập hoặc chỉnh sửa mã nguồn tại đây..."></textarea>
+    <script src="https://cloudflare.com"></script>
+
+    <div class="control-group">
+        <button type="button" class="btn-run" onclick="runPreviewCode()">▶ Chạy Code</button>
+        <button type="button" class="btn-full" onclick="openFullScreenApp()">💻 Xem Full</button>
+        <button type="button" class="btn-pub" onclick="publishAppToCloudVohan()">🚀 Xuất Bản</button>
+    </div>
+
+    <div id="linkContainer">
+        🎉 Đã xuất bản thành công App siêu cấp! Link ID vô hạn của em:<br>
+        <a id="generatedLink" href="#" target="_blank">Đang tải liên kết...</a>
     </div>
 
     <iframe id="previewIframe" class="preview-box"></iframe>
 
     <div id="fullScreenWrapper">
-        <button id="closeFullBtn" onclick="closeFullScreen()">Thoát Full</button>
+        <button type="button" id="closeFullBtn" onclick="closeFullScreenApp()">Thoát Xem</button>
         <iframe id="fullScreenIframe"></iframe>
     </div>
 
     <script>
-        // ⚠️ ĐIỀN THÔNG TIN CỦA EM VÀO 2 DÒNG DƯỚI ĐÂY:
-        const apiKey = "$$2a$10$T8XFyvC/Suad/v9oWisrleIexgHSR8oLlh6STz71YMb7GnKVz7eBO"; 
-        const githubUrl = "https://github.io";
+        const currentGithubRepoUrl = window.location.href.split('?')[0];
+
+        let virtualFiles = {
+            "index.html": "<!DOCTYPE html>\n<html>\n<head>\n<style>body{text-align:center;background:#111;color:#fff;font-family:Arial;margin-top:40px;}</style>\n</head>\n<body>\n<h2>Ứng Dụng Đã Chạy Thành Công!</h2>\n<p>Bấm nút Chạy Code mượt mà không lo bị tắt nữa nhé.</p>\n</body>\n</html>"
+        };
+        let currentActiveFile = "index.html";
 
         const editor = document.getElementById("codeEditor");
+        const fileListWrapper = document.getElementById("fileListWrapper");
         const previewIframe = document.getElementById("previewIframe");
         const fullIframe = document.getElementById("fullScreenIframe");
         const fullWrapper = document.getElementById("fullScreenWrapper");
         const linkContainer = document.getElementById("linkContainer");
         const generatedLink = document.getElementById("generatedLink");
-        const publishBtn = document.getElementById("publishBtn");
 
-        function runPreview() { previewIframe.srcdoc = editor.value; }
-        function runFullScreen() { fullWrapper.style.display = "block"; fullIframe.srcdoc = editor.value; }
-        function closeFullScreen() { fullWrapper.style.display = "none"; fullIframe.srcdoc = ""; }
+        editor.addEventListener("input", () => {
+            virtualFiles[currentActiveFile] = editor.value;
+        });
 
-        function publishGame() {
-            if(apiKey.includes("DÁN_MÃ_X_MASTER_KEY")) {
-                alert("Em chưa điền mã X-Master-Key của JSONBin kìa!");
+        function renderFileList() {
+            fileListWrapper.innerHTML = "";
+            for (let name in virtualFiles) {
+                let item = document.createElement("div");
+                item.className = "file-item" + (name === currentActiveFile ? " active" : "");
+                
+                item.innerHTML = `
+                    <div class="file-name" onclick="switchActiveFile('${name}')">📄 ${name}</div>
+                    <div class="file-actions">
+                        <button type="button" class="btn-ren" onclick="renameVirtualFile('${name}')">Đổi tên</button>
+                        <button type="button" class="btn-del" onclick="deleteVirtualFile('${name}')">Xóa</button>
+                    </div>
+                `;
+                fileListWrapper.appendChild(item);
+            }
+            editor.value = virtualFiles[currentActiveFile] || "";
+        }
+
+        function switchActiveFile(name) {
+            currentActiveFile = name;
+            renderFileList();
+            runPreviewCode();
+        }
+
+        function createNewFileManual() {
+            let name = document.getElementById("newFileName").value.trim();
+            if (!name) { alert("Chưa điền tên file!"); return; }
+            if (!name.endsWith(".html") && !name.endsWith(".js") && !name.endsWith(".css")) {
+                name += ".html";
+            }
+            if (virtualFiles[name]) { alert("Tên tệp này đã tồn tại!"); return; }
+            
+            virtualFiles[name] = `<!DOCTYPE html>\n<html>\n<body>\n<h2>Ứng dụng mới: ${name}</h2>\n</body>\n</html>`;
+            document.getElementById("newFileName").value = "";
+            switchActiveFile(name);
+        }
+
+        function deleteVirtualFile(name) {
+            if (Object.keys(virtualFiles).length <= 1) {
+                alert("Cần giữ lại ít nhất 1 file!");
                 return;
             }
-            publishBtn.disabled = true;
-            publishBtn.innerText = "Đang lưu...";
-            fetch("https://jsonbin.io", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-Master-Key": apiKey },
-                body: JSON.stringify({ html: editor.value })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.record) {
-                    const finalUrl = githubUrl + "?id=" + data.metadata.id;
-                    generatedLink.href = finalUrl; generatedLink.innerText = finalUrl;
-                    linkContainer.style.display = "block";
-                } else { alert("Lỗi lưu trữ! Kiểm tra lại API Key."); }
-            })
-            .catch(err => alert("Có lỗi xảy ra: " + err))
-            .finally(() => { publishBtn.disabled = false; publishBtn.innerText = "Xuất bản"; });
+            if (confirm(`Xóa file [ ${name} ] không?`)) {
+                delete virtualFiles[name];
+                if (currentActiveFile === name) {
+                    currentActiveFile = Object.keys(virtualFiles)[0];
+                }
+                renderFileList();
+                runPreviewCode();
+            }
+        }
+        function renameVirtualFile(oldName) {
+            let newName = prompt("Nhập tên mới cho file này:", oldName);
+            if (!newName || newName.trim() === oldName) return;
+            newName = newName.trim();
+            if (virtualFiles[newName]) { alert("Tên tệp tin mới bị trùng!"); return; }
+            
+            virtualFiles[newName] = virtualFiles[oldName];
+            delete virtualFiles[oldName];
+            if (currentActiveFile === oldName) currentActiveFile = newName;
+            renderFileList();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0]; 
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            if (file.name.endsWith(".zip")) {
+                reader.onload = function(e) {
+                    JSZip.loadAsync(e.target.result).then(function(zip) {
+                        let promises = [];
+                        zip.forEach(function (relativePath, zipEntry) {
+                            if (!zipEntry.dir && (zipEntry.name.endsWith(".html") || zipEntry.name.endsWith(".js") || zipEntry.name.endsWith(".css"))) {
+                                let p = zipEntry.async("string").then(function(content) {
+                                    virtualFiles[zipEntry.name] = content;
+                                });
+                                promises.push(p);
+                            }
+                        });
+                        Promise.all(promises).then(() => {
+                            let keys = Object.keys(virtualFiles);
+                            let htmlFile = keys.find(k => k.endsWith(".html"));
+                            currentActiveFile = htmlFile ? htmlFile : keys[0];
+                            renderFileList();
+                            runPreviewCode();
+                        });
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (file.name.endsWith(".html")) {
+                reader.onload = function(e) {
+                    virtualFiles[file.name] = e.target.result;
+                    currentActiveFile = file.name;
+                    renderFileList();
+                    runPreviewCode();
+                };
+                reader.readAsText(file);
+            }
+            event.target.value = ""; 
+        }
+
+        function injectSafeEnvironment(rawCode) {
+            if (!rawCode) return "";
+            let injectedSetup = `
+                <script>
+                    Object.defineProperty(window, 'onload', {
+                        set: function(fn) { 
+                            console.log('Chặn lệnh lặp onload gây sập màn hình');
+                            setTimeout(fn, 100); 
+                        },
+                        configurable: true
+                    });
+                <\/script>
+            `;
+            if (rawCode.includes("<html>")) {
+                return rawCode.replace("<html>", "<html>" + injectedSetup);
+            } else if (rawCode.includes("<head>")) {
+                return rawCode.replace("<head>", "<head>" + injectedSetup);
+            }
+            return injectedSetup + rawCode;
+        }
+
+        function runPreviewCode() {
+            const targetCode = virtualFiles[currentActiveFile] || "";
+            const safeCode = injectSafeEnvironment(targetCode);
+            
+            const blob = new Blob([safeCode], { type: 'text/html;charset=utf-8' });
+            previewIframe.src = URL.createObjectURL(blob);
+        }
+
+        function openFullScreenApp() {
+            const targetCode = virtualFiles[currentActiveFile] || "";
+            const safeCode = injectSafeEnvironment(targetCode);
+            
+            fullWrapper.style.display = "block";
+            const blob = new Blob([safeCode], { type: 'text/html;charset=utf-8' });
+            fullIframe.src = URL.createObjectURL(blob);
+        }
+
+        function closeFullScreenApp() {
+            fullWrapper.style.display = "none";
+            fullIframe.src = ""; 
+        }
+
+        function publishAppToCloudVohan() {
+            const currentCode = virtualFiles[currentActiveFile];
+            if (!currentCode) { alert("File trống!"); return; }
+
+            try {
+                const compressedString = btoa(encodeURIComponent(currentCode).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                    return String.fromCharCode('0x' + p1);
+                }));
+                
+                const finalPublishedLink = currentGithubRepoUrl + "?code=" + compressedString;
+                
+                generatedLink.href = finalPublishedLink;
+                generatedLink.innerText = finalPublishedLink;
+                linkContainer.style.display = "block";
+            } catch(e) {
+                alert("Mã nguồn quá dài để nén link!");
+            }
         }
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (id) {
-                document.body.innerHTML = "<h3 style='text-align:center; margin-top:50px;'>Đang tải game từ đám mây...</h3>";
-                fetch("https://jsonbin.io/" + id, {
-                    method: "GET", headers: { "X-Master-Key": apiKey }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.record && data.record.html) {
-                        document.body.innerHTML = '<iframe srcdoc="" id="directIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
-                        document.getElementById("directIframe").srcdoc = data.record.html;
-                    } else { document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Không tìm thấy mã game!</h2>"; }
-                })
-                .catch(err => { document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Lỗi kết nối đám mây! Bạn có thể chưa thay đổi đúng API Key chính xác của mình.</h2>"; });
-            } else { runPreview(); }
+            const codeParam = urlParams.get('code');
+            const idParam = urlParams.get('id');
+            
+            if (codeParam) {
+                try {
+                    const decodedCode = decodeURIComponent(atob(codeParam).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                    
+                    document.body.innerHTML = '<iframe srcdoc="" id="directRunningIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
+                    document.getElementById("directRunningIframe").srcdoc = decodedCode;
+                } catch(e) {
+                    document.body.innerHTML = "<h3 style='color:red; text-align:center; margin-top:50px;'>Lỗi giải mã ứng dụng đám mây lai!</h3>";
+                }
+            } else if (idParam) {
+                document.body.innerHTML = "<div style='text-align:center; margin-top:50px; color:#00ff66;'>⏳ Đang tải link cũ...</div>";
+                fetch("https://jsonbin.io", { headers: { "X-Master-Key": "$2a$10$fVqX0XNqjZ7D3Fas5V2gOeR7VbXvKwGAnYmUkDmdqVvCgRksIDKsc" } })
+                .then(res => res.json()).then(data => {
+                    const appCode = data.record[idParam];
+                    if (appCode) {
+                        document.body.innerHTML = '<iframe srcdoc="" id="directRunningIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
+                        document.getElementById("directRunningIframe").srcdoc = appCode;
+                    } else { document.body.innerHTML = "<h3 style='color:red;'>Không tìm thấy App!</h3>"; }
+                }).catch(() => { document.body.innerHTML = "<h3 style='color:red;'>Lỗi kết nối đám mây cũ!</h3>"; });
+            } else {
+                renderFileList();
+                runPreviewCode();
+            }
         }
     </script>
 </body>
