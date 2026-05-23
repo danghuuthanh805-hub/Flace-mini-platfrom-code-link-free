@@ -229,7 +229,6 @@
         function runPreviewCode() {
             const targetCode = virtualFiles[currentActiveFile] || "";
             const safeCode = injectSafeEnvironment(targetCode);
-            
             const blob = new Blob([safeCode], { type: 'text/html;charset=utf-8' });
             previewIframe.src = URL.createObjectURL(blob);
         }
@@ -237,7 +236,6 @@
         function openFullScreenApp() {
             const targetCode = virtualFiles[currentActiveFile] || "";
             const safeCode = injectSafeEnvironment(targetCode);
-            
             fullWrapper.style.display = "block";
             const blob = new Blob([safeCode], { type: 'text/html;charset=utf-8' });
             fullIframe.src = URL.createObjectURL(blob);
@@ -248,51 +246,74 @@
             fullIframe.src = ""; 
         }
 
+        // SỬA LỖI URL TOO LONG: Đẩy thẳng lên máy chủ ẩn danh để lấy mã ID siêu ngắn gọn
         function publishAppToCloudVohan() {
             const currentCode = virtualFiles[currentActiveFile];
             if (!currentCode) { alert("File trống!"); return; }
 
-            try {
-                const compressedString = btoa(encodeURIComponent(currentCode).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                    return String.fromCharCode('0x' + p1);
-                }));
-                
-                const finalPublishedLink = currentGithubRepoUrl + "?code=" + compressedString;
-                
-                generatedLink.href = finalPublishedLink;
-                generatedLink.innerText = finalPublishedLink;
-                linkContainer.style.display = "block";
-            } catch(e) {
-                alert("Mã nguồn quá dài để nén link!");
-            }
+            const pubBtn = document.querySelector(".btn-pub");
+            pubBtn.disabled = true;
+            pubBtn.innerText = "⏳ Đang tạo ID ngắn...";
+
+            // Sử dụng kho lưu trữ đám mây ẩn danh siêu tốc để lấy ID ngắn gọn
+            fetch("https://jsonbin.io", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ html: currentCode })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.metadata && data.metadata.id) {
+                    const shortCloudId = data.metadata.id;
+                    // Tạo ra link siêu ngắn gọn không lo bị lỗi độ dài URL
+                    const finalPublishedLink = currentGithubRepoUrl[0] + "?id=" + shortCloudId;
+                    
+                    generatedLink.href = finalPublishedLink;
+                    generatedLink.innerText = finalPublishedLink;
+                    linkContainer.style.display = "block";
+                } else {
+                    alert("Lỗi máy chủ đám mây không cấp được ID ngắn!");
+                }
+            })
+            .catch(err => alert("Lỗi kết nối đám mây: " + err))
+            .finally(() => {
+                pubBtn.disabled = false;
+                pubBtn.innerText = "🚀 Xuất Bản";
+            });
         }
 
+        // BỘ ĐỌC TỰ ĐỘNG PHÂN TÍCH ID SIÊU NGẮN KHI MỞ LINK
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const codeParam = urlParams.get('code');
             const idParam = urlParams.get('id');
+            const codeParam = urlParams.get('code'); // Dự phòng nếu dùng link cũ
             
-            if (codeParam) {
+            if (idParam) {
+                document.body.innerHTML = "<div style='display:flex; justify-content:center; align-items:center; height:100vh; font-weight:bold; color:#00ff66; background:#0d0d14;'>🤖 AI đang tải App có ID: " + idParam + " ...</div>";
+                
+                // Kéo code từ đám mây ẩn danh về điện thoại thông qua ID số ngắn gọn
+                fetch("https://jsonbin.io/" + idParam, { method: "GET" })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.record && data.record.html) {
+                        document.body.innerHTML = '<iframe srcdoc="" id="directRunningIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
+                        document.getElementById("directRunningIframe").srcdoc = data.record.html;
+                    } else {
+                        document.body.innerHTML = "<h3 style='color:red; text-align:center; margin-top:50px;'>Không tìm thấy App ứng với ID này!</h3>";
+                    }
+                })
+                .catch(err => {
+                    document.body.innerHTML = "<h3 style='color:red; text-align:center; margin-top:50px;'>Lỗi đường truyền tải App đám mây!</h3>";
+                });
+            } else if (codeParam) {
+                // Bộ đọc giải mã dự phòng nếu em chạy link nén cũ
                 try {
                     const decodedCode = decodeURIComponent(atob(codeParam).split('').map(function(c) {
                         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                     }).join(''));
-                    
                     document.body.innerHTML = '<iframe srcdoc="" id="directRunningIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
                     document.getElementById("directRunningIframe").srcdoc = decodedCode;
-                } catch(e) {
-                    document.body.innerHTML = "<h3 style='color:red; text-align:center; margin-top:50px;'>Lỗi giải mã ứng dụng đám mây lai!</h3>";
-                }
-            } else if (idParam) {
-                document.body.innerHTML = "<div style='text-align:center; margin-top:50px; color:#00ff66;'>⏳ Đang tải link cũ...</div>";
-                fetch("https://jsonbin.io", { headers: { "X-Master-Key": "$2a$10$fVqX0XNqjZ7D3Fas5V2gOeR7VbXvKwGAnYmUkDmdqVvCgRksIDKsc" } })
-                .then(res => res.json()).then(data => {
-                    const appCode = data.record[idParam];
-                    if (appCode) {
-                        document.body.innerHTML = '<iframe srcdoc="" id="directRunningIframe" style="width:100vw; height:100vh; border:none; margin:0; padding:0; overflow:hidden; position:fixed; top:0; left:0;"></iframe>';
-                        document.getElementById("directRunningIframe").srcdoc = appCode;
-                    } else { document.body.innerHTML = "<h3 style='color:red;'>Không tìm thấy App!</h3>"; }
-                }).catch(() => { document.body.innerHTML = "<h3 style='color:red;'>Lỗi kết nối đám mây cũ!</h3>"; });
+                } catch(e) { document.body.innerHTML = "<h3 style='color:red;'>Lỗi giải mã link cũ!</h3>"; }
             } else {
                 renderFileList();
                 runPreviewCode();
